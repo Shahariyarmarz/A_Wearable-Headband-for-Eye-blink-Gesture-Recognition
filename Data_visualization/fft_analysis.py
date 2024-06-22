@@ -20,139 +20,158 @@ root.withdraw()
 # Global variable declaration
 # Data_file_names = [['SD1_dataFile_002.dat','SD2_dataFile_002.dat']]
 def process_DAQ_data(SD_file, Fs_sensor):
-    # store the name string of the input variable folder name
+  """Processes DAQ data file, converts to voltage, and extracts sensor data.
 
-    SD_sensor_data = []
-    # SD1_sensation_data = []
-    # SD2_sensation_data = []
+  Args:
+      SD_file: Path to the DAQ data file.
+      Fs_sensor: Data sampling frequency.
 
-    # load .dat format data files
+  Returns:
+      A dictionary containing sensor data as NumPy arrays.
+  """
 
-    Pzplt_data_1 = []
-    Pzplt_data_2 = []
-    Pzplt_data_3 = []
-    Pzplt_data_4 = []
-    Pzplt_data_5 = []
+  # Read binary data
+  SD_data_original = np.fromfile(SD_file, dtype=np.int32)
 
-    # # Reading the binary data files
-    # SD1_Data_file_ID = open(Data_file_names[0][0], 'rb')  # sensation data will be the first element in the cell by default
-    # SD2_Data_file_ID = open(Data_file_names[0][1], 'rb')
-    SD_Data_file_ID = open(SD_file, "rb")  # sensation data will be the first element in the cell by default
+  # Reshape data
+  n = 25  # Number of columns in converted data
+  m = len(SD_data_original) // n
+  SD_data = SD_data_original.reshape((m, n))
 
-    SD_data_original = np.fromfile(SD_Data_file_ID, dtype=np.uint16)  # This will be a column matrix
+  # Create empty lists for sensor data
+  sensor_data = {
+      "A0": [], "A1": [], "A2": [], "A3": [], "A4": [],
+      "A5": [], "A6": [], "A7": [], "A8": [], "A9": [],
+      "A10": [], "A11": [], "A12": [], "A13": [], "A14": [],
+      "A15": [], "Aclm_X": [], "Aclm_Y": [], "Aclm_Z": [],
+      "Gyro_X": [], "Gyro_Y": [], "Gyro_Z": [], "Mag_X": [],
+      "Mag_Y": [], "Mag_Z": [],
+  }
 
-    # Formatting the sensor data
-    # n = int(input("Enter the number of sensors: "))
-    n = 5  # number of column in the converted data variable. The original data consists of 7 ADC value and a test data as 1 sample
-    m = len(SD_data_original) // n  # number of rows in the converted data variable
-    SD_data = np.zeros((m, n))  # variable for storing the converted data
-    k = 0  # variable for tracking the data number
+  # ADC conversion parameters (assuming potentially different resolutions)
+  adc_resolutions = {  # Dictionary for sensor-specific ADC resolutions
+      "A0": 13, "A1": 13, "A2": 13, "A3": 13, "A4": 13,
+      "A5": 13, "A6": 13, "A7": 13, "A8": 13, "A9": 13,
+      "A10": 13, "A11": 13, "A12": 13, "A13": 13, "A14": 16,  # Example: A14 with 16-bit ADC
+      "A15": 16,  # Example: A15 with 16-bit ADC
+      "Aclm_X": 13, "Aclm_Y": 13, "Aclm_Z": 13,
+      "Gyro_X": 13, "Gyro_Y": 13, "Gyro_Z": 13,
+      "Mag_X": 13, "Mag_Y": 13, "Mag_Z": 13,
+  }
 
-    for i in range(m):
-        for j in range(n):
-            SD_data[i][j] = SD_data_original[k]
-            k += 1
+  # Extract and convert sensor data
+  i = 0
+  for sensor_name in adc_resolutions:
+        adc_resolution = adc_resolutions[sensor_name]
+        max_adc_value = 2**adc_resolution - 1
+        slope = 3.3 / max_adc_value
+        # sensor_index = int(sensor_name[1:])  # Extract the numeric part of the sensor name
+        sensor_data[sensor_name] = SD_data[:, i] * slope
+        i = i + 1
 
-    # Extraction of the sensor data and conversion into the voltage value
-    ADC_resolution = 13  # ADC resolution is 12 bit
-    maxADC_value = 2**ADC_resolution - 1
-    slope = 3.3 / maxADC_value  # 3.3 volt corresponds to 4095 ADC value as the ADC resolution is 12-bit
-    SD_sensor_data = SD_data[:, :] * slope  # Converts the ADC output into voltage values
+  # Calculate data points
+  n = len(sensor_data["A0"])
+  m = n % 512
 
+  print('Data conversion is successful.')
+  print(f'Total data point: {n}')
+  print(f'Data point less than 512: {m}')
 
-
-
-    # Extracting sensor data
-    Pzplt_data_1.append(SD_sensor_data[:, 0])  
-    Pzplt_data_2.append(SD_sensor_data[:,1])
-    Pzplt_data_3.append(SD_sensor_data[:,2])
-    Pzplt_data_4.append(SD_sensor_data[:,3])
-    Pzplt_data_5.append(SD_sensor_data[:,4])
-
-    # Plotting the converted data
-    # Fs_sensor = 512  # Data sampling speed
-    SD_time_vector = np.arange(len(SD_sensor_data)) / Fs_sensor
-
-    print('Data conversion is successful.')
-    n = len(Pzplt_data_1[0])
-    print(f'Total data point: {n}')
-    m = n % 512
-    print(f'Data point less than 512: {m}')
-
-    return Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5
+  return sensor_data
 
 
 
 
-def visual_sensor_data(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, database_name, Fs_sensor):
-    # Create the visual directory if it doesn't exist
+def visualize_sensor_data(sensor_data, database_name, Fs_sensor):
+    """Visualizes sensor data from the provided dictionary.
+
+    Args:
+        sensor_data: A dictionary containing sensor data as NumPy arrays. Keys should
+                     correspond to sensor names (e.g., "A0", "A1", etc.).
+        Fs_sensor: Data sampling frequency.
+        database_name: Name to use for saving the visualization.
+    """
+
+    # Create the visual directory if it doesn't exist (optional)
     if not os.path.exists('visual'):
         os.makedirs('visual')
-    # Fs_sensor = 512  # Data sampling speed
-    time_vector = np.arange(len(Pzplt_data_1[0])) / Fs_sensor
-    max_sample = np.maximum(Pzplt_data_1,Pzplt_data_2)
-    max_sample = np.maximum(max_sample,Pzplt_data_3)
-    max_sample = np.maximum(max_sample,Pzplt_data_4)
-    max_sample = np.maximum(max_sample,Pzplt_data_5)
 
-    fig, axs = plt.subplots(6, figsize=(20, 30))
+    # Calculate time vector
+    time_vector = np.arange(len(sensor_data["A0"])) / Fs_sensor
 
-    # Piezo-plate data 1
-    axs[0].plot(time_vector, Pzplt_data_1[0], label='Piezo-plate 1')
-    axs[0].set_title('A0 Right Piezo-plate data')
-    axs[0].set_xlabel('Time')
-    axs[0].set_ylabel('Sensor Amplitude')
-    axs[0].legend()
-    axs[0].grid(True)
-    # axs[0].set_ylim(0, 500)
-    # axs[0].set_xlim(5, 7) 
+    # Create subplots for the first 5 sensors
+    fig, axs = plt.subplots(5, 1, figsize=(15, 8))  # Adjust figsize as needed
+    for i, sensor_name in enumerate(list(sensor_data.keys())[:5]):
+        axs[i].plot(time_vector, sensor_data[sensor_name], label=sensor_name)
+        axs[i].set_title(f'{sensor_name} Sensor Data')
+        axs[i].set_xlabel('Time (s)')
+        axs[i].set_ylabel('Sensor Output (a.u.)')
+        axs[i].legend()
+        axs[i].grid(True)
 
-    # Piezo-plate data 2
-    axs[1].plot(time_vector, Pzplt_data_2[0], label='Piezo-plate 2')
-    axs[1].set_title('A1 Left Piezo-plate data')
-    axs[1].set_xlabel('Time')
-    axs[1].set_ylabel('Sensor Amplitude')
-    axs[1].legend()
-    axs[1].grid(True)
-    # axs[1].set_xlim(5, 7) 
-
-    # Piezo-plate data 3
-    axs[2].plot(time_vector, Pzplt_data_3[0], label='Piezo-plate 3')
-    axs[2].set_title('A2 Piezo-plate data')
-    axs[2].set_xlabel('Time')
-    axs[2].set_ylabel('Sensor Amplitude')
-    axs[2].legend()
-    axs[2].grid(True)
-    # axs[2].set_xlim(5, 7) 
-
-    # Piezo-plate data 4
-    axs[3].plot(time_vector, Pzplt_data_4[0], label='Piezo-plate 4')
-    axs[3].set_title('A3 Piezo-plate data')
-    axs[3].set_xlabel('Time')
-    axs[3].set_ylabel('Sensor Amplitude')
-    axs[3].legend()
-    axs[3].grid(True)
-
-    # Piezo-plate data 5
-    axs[4].plot(time_vector, Pzplt_data_5[0], label='Piezo-plate 5')
-    axs[4].set_title('A4 Piezo-plate data')
-    axs[4].set_xlabel('Time')
-    axs[4].set_ylabel('Sensor Amplitude')
-    axs[4].legend()
-    axs[4].grid(True)
-
-
-    #-------------------Figure_5----------------------------
-    axs[5].set_title('Fused visual Sensor data by Non_Max_Suppression')
-    axs[5].plot(time_vector, max_sample[0], color='purple', label='Piezo Sensor')
-    axs[5].set_xlabel('Time (s)')
-    axs[5].set_ylabel('Sensor Output (a.u.)')
-    axs[5].legend()
-    axs[5].grid(True)
-
+    # Save the first plot
     plt.tight_layout()
-    plt.savefig(f'./visual/piezo_plat_{database_name}.png', dpi=600)
+    plt.savefig(f'./visual/{database_name}_part1.png', dpi=300)
     plt.clf()
+
+    # Create subplots for the next 5 sensors
+    fig, axs = plt.subplots(5, 1, figsize=(15, 8))  # Adjust figsize as needed
+    for i, sensor_name in enumerate(list(sensor_data.keys())[5:10]):
+        axs[i].plot(time_vector, sensor_data[sensor_name], label=sensor_name)
+        axs[i].set_title(f'{sensor_name} Sensor Data')
+        axs[i].set_xlabel('Time (s)')
+        axs[i].set_ylabel('Sensor Output (a.u.)')
+        axs[i].legend()
+        axs[i].grid(True)
+
+    # Save the second plot
+    plt.tight_layout()
+    plt.savefig(f'./visual/{database_name}_part2.png', dpi=300)
+    plt.clf()
+
+    # Create subplots for the last 9 sensors
+    fig, axs = plt.subplots(9, 1, figsize=(15, 12))  # Adjust figsize as needed
+    for i, sensor_name in enumerate(list(sensor_data.keys())[16:]):
+        # row = i // 3
+        # col = i % 3
+        axs[i].plot(time_vector, sensor_data[sensor_name], label=sensor_name)
+        axs[i].set_title(f'{sensor_name} Sensor Data')
+        axs[i].set_xlabel('Time (s)')
+        axs[i].set_ylabel('Sensor Output (a.u.)')
+        axs[i].legend()
+        axs[i].grid(True)
+
+    # Save the third plot
+    plt.tight_layout()
+    plt.savefig(f'./visual/{database_name}_part3.png', dpi=300)
+    plt.clf()
+
+
+# call the function
+#Pzplt_data_1, Pzplt_data_2 = process_DAQ_data(f'G:/Job_AKG/eye_blink_stuff/binary_file_reading/Data00.dat')
+# please change the directory to the data file directory if needed
+try:
+    print("Please select the data file directory")
+    initial_dir = f'G:/DATA Visualization/Data_visualization_v5/datafile'  # Define database_dir before using it
+    database_dir = filedialog.askdirectory(initialdir=initial_dir)
+except:
+    # exit
+    sys.exit("No directory is selected")
+    database_dir = f"H:/MAIMLab/Eye_gesture_recognition/Datafile"
+    print("Default directory is used: {}".format(database_dir))
+# from the database directory .dat format data load and pass to the process_DAQ_data function
+database = []
+for root,dirs, files in os.walk(database_dir):
+    for file in files:
+        if file.endswith('.dat'):
+            database.append(file)
+database = sorted(database)
+print(database)
+for i in range(len(database)):
+    sensor_data = process_DAQ_data(f"{database_dir}/{database[i]}", Fs_sensor=256)
+    visualize_sensor_data(sensor_data, database[i][:-4], Fs_sensor=256)
+  
+
 
 
 def FFT(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, database_name, Fs_sensor):
@@ -524,37 +543,37 @@ def SNR_dB_AKG(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_dat
 
     
 
-# call the function
-#Pzplt_data_1, Pzplt_data_2 = process_DAQ_data(f'G:/Job_AKG/eye_blink_stuff/binary_file_reading/Data00.dat')
-# please change the directory to the data file directory if needed
-try:
-    print("Please select the data file directory")
-    initial_dir = f'H:/MAIMLab/Eye_gesture_recognition/Datafile'  # Define database_dir before using it
-    database_dir = filedialog.askdirectory(initialdir=initial_dir)
-except:
-    # exit
-    sys.exit("No directory is selected")
-    database_dir = f"H:/MAIMLab/Eye_gesture_recognition/Datafile"
-    print("Default directory is used: {}".format(database_dir))
-# from the database directory .dat format data load and pass to the process_DAQ_data function
-database = []
-for root,dirs, files in os.walk(database_dir):
-    for file in files:
-        if file.endswith('.dat'):
-            database.append(file)
-database = sorted(database)
-print(database)
-for i in range(len(database)):
-    Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5 = process_DAQ_data(f"{database_dir}/{database[i]}", Fs_sensor=512)
-    visual_sensor_data(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, database[i][:-4], Fs_sensor=512)
-    # FFT(Pzplt_data_1[0], Pzplt_data_2[0], Pzplt_data_3[0], Pzplt_data_4[0], Pzplt_data_5[0], database[i][:-4], Fs_sensor=512)
-    Pzplt_data_fltd_1, Pzplt_data_fltd_2, Pzplt_data_fltd_3, Pzplt_data_fltd_4, Pzplt_data_fltd_5 = band_pass(database[i][:-4], Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, lowCutoff_FM=1, highCutoff_FM=128, Fs_sensor=512) #L_0.54/0.81 H_14
-    # Non_max_Suppression(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, Fs_sensor=512)
-    print("SNR using band pass filtered signal---------------->")
-    SNR_dB(Pzplt_data_fltd_1, Pzplt_data_fltd_2, Pzplt_data_fltd_3, Pzplt_data_fltd_4, Pzplt_data_fltd_5, Fs_sensor=512)
-    SNR_dB_AKG(Pzplt_data_fltd_1, Pzplt_data_fltd_2, Pzplt_data_fltd_3, Pzplt_data_fltd_4, Pzplt_data_fltd_5, Fs_sensor=512)
-    # print("SNR using background mean normalized signal---------------->")
-    # SNR_dB_bgnm(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, Fs_sensor=512)
+# # call the function
+# #Pzplt_data_1, Pzplt_data_2 = process_DAQ_data(f'G:/Job_AKG/eye_blink_stuff/binary_file_reading/Data00.dat')
+# # please change the directory to the data file directory if needed
+# try:
+#     print("Please select the data file directory")
+#     initial_dir = f'H:/MAIMLab/Eye_gesture_recognition/Datafile'  # Define database_dir before using it
+#     database_dir = filedialog.askdirectory(initialdir=initial_dir)
+# except:
+#     # exit
+#     sys.exit("No directory is selected")
+#     database_dir = f"H:/MAIMLab/Eye_gesture_recognition/Datafile"
+#     print("Default directory is used: {}".format(database_dir))
+# # from the database directory .dat format data load and pass to the process_DAQ_data function
+# database = []
+# for root,dirs, files in os.walk(database_dir):
+#     for file in files:
+#         if file.endswith('.dat'):
+#             database.append(file)
+# database = sorted(database)
+# print(database)
+# for i in range(len(database)):
+#     Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5 = process_DAQ_data(f"{database_dir}/{database[i]}", Fs_sensor=512)
+#     visual_sensor_data(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, database[i][:-4], Fs_sensor=512)
+#     # FFT(Pzplt_data_1[0], Pzplt_data_2[0], Pzplt_data_3[0], Pzplt_data_4[0], Pzplt_data_5[0], database[i][:-4], Fs_sensor=512)
+#     Pzplt_data_fltd_1, Pzplt_data_fltd_2, Pzplt_data_fltd_3, Pzplt_data_fltd_4, Pzplt_data_fltd_5 = band_pass(database[i][:-4], Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, lowCutoff_FM=1, highCutoff_FM=128, Fs_sensor=512) #L_0.54/0.81 H_14
+#     # Non_max_Suppression(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, Fs_sensor=512)
+#     print("SNR using band pass filtered signal---------------->")
+#     SNR_dB(Pzplt_data_fltd_1, Pzplt_data_fltd_2, Pzplt_data_fltd_3, Pzplt_data_fltd_4, Pzplt_data_fltd_5, Fs_sensor=512)
+#     SNR_dB_AKG(Pzplt_data_fltd_1, Pzplt_data_fltd_2, Pzplt_data_fltd_3, Pzplt_data_fltd_4, Pzplt_data_fltd_5, Fs_sensor=512)
+#     # print("SNR using background mean normalized signal---------------->")
+#     # SNR_dB_bgnm(Pzplt_data_1, Pzplt_data_2, Pzplt_data_3, Pzplt_data_4, Pzplt_data_5, Fs_sensor=512)
 
 # Pzplt_data_1, Pzplt_data_2 = process_DAQ_data(f'{database_dir}')
 # visual_sensor_data(Pzplt_data_1, Pzplt_data_2)
