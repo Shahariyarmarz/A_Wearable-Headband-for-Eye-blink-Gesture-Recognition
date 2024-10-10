@@ -8,15 +8,9 @@ void read_analog_sensors(void){
       ADC_BUFFER[4][ADC_BUF_END_INDX] = analogRead(A4);
       ADC_BUFFER[5][ADC_BUF_END_INDX] = analogRead(A5);  
       ADC_BUFFER[6][ADC_BUF_END_INDX] = analogRead(A6);
-      ADC_BUFFER[7][ADC_BUF_END_INDX] = analogRead(A7);
-      ADC_BUFFER[8][ADC_BUF_END_INDX] = analogRead(A14);  
-      ADC_BUFFER[9][ADC_BUF_END_INDX] = analogRead(A15);
-      ADC_BUFFER[10][ADC_BUF_END_INDX] = analogRead(A16);
-      ADC_BUFFER[11][ADC_BUF_END_INDX] = analogRead(A17);  
-      ADC_BUFFER[12][ADC_BUF_END_INDX] = analogRead(A18);
-      ADC_BUFFER[13][ADC_BUF_END_INDX] = analogRead(A19);
-      ADC_BUFFER[14][ADC_BUF_END_INDX] = adc0; 
-      ADC_BUFFER[15][ADC_BUF_END_INDX] = adc1;
+      ADC_BUFFER[7][ADC_BUF_END_INDX] = analogRead(A7); 
+      // ADC_BUFFER[14][ADC_BUF_END_INDX] = adc0; 
+      // ADC_BUFFER[15][ADC_BUF_END_INDX] = adc1;
       ADC_BUF_END_INDX = (ADC_BUF_END_INDX + 1) % ADC_BUF_SIZE;
       if (ADC_BUF_END_INDX == ADC_BUF_START_INDX) {
         Serial.println("Buffer Overflow!!!!!");
@@ -32,23 +26,15 @@ void read_analog_sensors(void){
       ADC_BUFFER[5][ADC_BUF_END_INDX] = analogRead(A5);  
       ADC_BUFFER[6][ADC_BUF_END_INDX] = analogRead(A6);
       ADC_BUFFER[7][ADC_BUF_END_INDX] = analogRead(A7);
-      ADC_BUFFER[8][ADC_BUF_END_INDX] = analogRead(A14);  
-      ADC_BUFFER[9][ADC_BUF_END_INDX] = analogRead(A15);
-      ADC_BUFFER[10][ADC_BUF_END_INDX] = analogRead(A16);
-      ADC_BUFFER[11][ADC_BUF_END_INDX] = analogRead(A17);  
-      ADC_BUFFER[12][ADC_BUF_END_INDX] = analogRead(A18);
-      ADC_BUFFER[13][ADC_BUF_END_INDX] = analogRead(A19);
-      ADC_BUFFER[14][ADC_BUF_END_INDX] = adc0; 
-      ADC_BUFFER[15][ADC_BUF_END_INDX] = adc1;
-      ADC_BUFFER[16][ADC_BUF_END_INDX] = accx;
-      ADC_BUFFER[17][ADC_BUF_END_INDX] = accy;  
-      ADC_BUFFER[18][ADC_BUF_END_INDX] = accz;
-      ADC_BUFFER[19][ADC_BUF_END_INDX] = gyx;
-      ADC_BUFFER[20][ADC_BUF_END_INDX] = gyy;  
-      ADC_BUFFER[21][ADC_BUF_END_INDX] = gyz;
-      ADC_BUFFER[22][ADC_BUF_END_INDX] = mgx;
-      ADC_BUFFER[23][ADC_BUF_END_INDX] = mgy;
-      ADC_BUFFER[24][ADC_BUF_END_INDX] = mgz;
+      // ADC_BUFFER[8][ADC_BUF_END_INDX] = accx;
+      // ADC_BUFFER[9][ADC_BUF_END_INDX] = accy;  
+      // ADC_BUFFER[10][ADC_BUF_END_INDX] = accz;
+      // ADC_BUFFER[11][ADC_BUF_END_INDX] = gyx;
+      // ADC_BUFFER[12][ADC_BUF_END_INDX] = gyy;  
+      // ADC_BUFFER[13][ADC_BUF_END_INDX] = gyz;
+      // ADC_BUFFER[14][ADC_BUF_END_INDX] = mgx;
+      // ADC_BUFFER[15][ADC_BUF_END_INDX] = mgy;
+      // ADC_BUFFER[16][ADC_BUF_END_INDX] = mgz;
       ADC_BUF_END_INDX = (ADC_BUF_END_INDX + 1) % ADC_BUF_SIZE;
       if (ADC_BUF_END_INDX == ADC_BUF_START_INDX) {
         Serial.println("Buffer Overflow!!!!!");
@@ -100,14 +86,15 @@ void logData(int32_t ADC_buf_copy[Sensor_size][ADC_COPY_SIZE], uint16_t size) {
             file.write((const int32_t *)&ADC_buf_copy[14][i], sizeof(ADC_buf_copy[14][i]));
             file.write((const int32_t *)&ADC_buf_copy[15][i], sizeof(ADC_buf_copy[15][i]));
             file.write((const int32_t *)&ADC_buf_copy[16][i], sizeof(ADC_buf_copy[16][i]));
-            file.write((const int32_t *)&ADC_buf_copy[17][i], sizeof(ADC_buf_copy[17][i]));
-            file.write((const int32_t *)&ADC_buf_copy[18][i], sizeof(ADC_buf_copy[18][i]));
-            file.write((const int32_t *)&ADC_buf_copy[19][i], sizeof(ADC_buf_copy[19][i]));
-            file.write((const int32_t *)&ADC_buf_copy[20][i], sizeof(ADC_buf_copy[20][i]));
-            file.write((const int32_t *)&ADC_buf_copy[21][i], sizeof(ADC_buf_copy[21][i]));
-            file.write((const int32_t *)&ADC_buf_copy[22][i], sizeof(ADC_buf_copy[22][i]));
-            file.write((const int32_t *)&ADC_buf_copy[23][i], sizeof(ADC_buf_copy[23][i]));
-            file.write((const int32_t *)&ADC_buf_copy[24][i], sizeof(ADC_buf_copy[24][i]));
+            
+            // file.write((const int32_t *)&ADC_buf_copy[17][i], sizeof(ADC_buf_copy[17][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[18][i], sizeof(ADC_buf_copy[18][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[19][i], sizeof(ADC_buf_copy[19][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[20][i], sizeof(ADC_buf_copy[20][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[21][i], sizeof(ADC_buf_copy[21][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[22][i], sizeof(ADC_buf_copy[22][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[23][i], sizeof(ADC_buf_copy[23][i]));
+            // file.write((const int32_t *)&ADC_buf_copy[24][i], sizeof(ADC_buf_copy[24][i]));
             
 
             // file.write((const uint8_t *)&ADC_buf_copy, sizeof(ADC_buf_copy));

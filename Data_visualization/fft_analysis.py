@@ -20,64 +20,75 @@ root.withdraw()
 # Global variable declaration
 # Data_file_names = [['SD1_dataFile_002.dat','SD2_dataFile_002.dat']]
 def process_DAQ_data(SD_file, Fs_sensor):
-  """Processes DAQ data file, converts to voltage, and extracts sensor data.
+    """Processes DAQ data file, converts to voltage, and extracts sensor data.
 
-  Args:
-      SD_file: Path to the DAQ data file.
-      Fs_sensor: Data sampling frequency.
+    Args:
+        SD_file: Path to the DAQ data file.
+        Fs_sensor: Data sampling frequency.
 
-  Returns:
-      A dictionary containing sensor data as NumPy arrays.
-  """
+    Returns:
+        A dictionary containing sensor data as NumPy arrays.
+    """
+    SD_sensor_data = []  # List to store sensor data
+    # Read binary data
+    SD_Data_file_ID = open(SD_file, "rb")  # sensation data will be the first element in the cell by default
+    SD_data_original = np.fromfile(SD_Data_file_ID, dtype=np.int32)
 
-  # Read binary data
-  SD_data_original = np.fromfile(SD_file, dtype=np.int32)
+    # Reshape data
+    n = 17  # Number of columns in converted data
+    m = len(SD_data_original) // n
+    SD_data = SD_data_original.reshape((m, n))
+    # SD_data = np.zeros((m, n))  # variable for storing the converted data
 
-  # Reshape data
-  n = 25  # Number of columns in converted data
-  m = len(SD_data_original) // n
-  SD_data = SD_data_original.reshape((m, n))
 
-  # Create empty lists for sensor data
-  sensor_data = {
-      "A0": [], "A1": [], "A2": [], "A3": [], "A4": [],
-      "A5": [], "A6": [], "A7": [], "A8": [], "A9": [],
-      "A10": [], "A11": [], "A12": [], "A13": [], "A14": [],
-      "A15": [], "Aclm_X": [], "Aclm_Y": [], "Aclm_Z": [],
-      "Gyro_X": [], "Gyro_Y": [], "Gyro_Z": [], "Mag_X": [],
-      "Mag_Y": [], "Mag_Z": [],
-  }
+    # Create empty lists for sensor data
+    sensor_data = {
+        "A0": [], "A1": [], "A2": [], "A3": [], "A4": [],
+        "A5": [], "A6": [], "A7": [], "Aclm_X": [], "Aclm_Y": [], "Aclm_Z": [],
+        "Gyro_X": [], "Gyro_Y": [], "Gyro_Z": [], "Mag_X": [],
+        "Mag_Y": [], "Mag_Z": []
+    }
 
-  # ADC conversion parameters (assuming potentially different resolutions)
-  adc_resolutions = {  # Dictionary for sensor-specific ADC resolutions
-      "A0": 13, "A1": 13, "A2": 13, "A3": 13, "A4": 13,
-      "A5": 13, "A6": 13, "A7": 13, "A8": 13, "A9": 13,
-      "A10": 13, "A11": 13, "A12": 13, "A13": 13, "A14": 16,  # Example: A14 with 16-bit ADC
-      "A15": 16,  # Example: A15 with 16-bit ADC
-      "Aclm_X": 13, "Aclm_Y": 13, "Aclm_Z": 13,
-      "Gyro_X": 13, "Gyro_Y": 13, "Gyro_Z": 13,
-      "Mag_X": 13, "Mag_Y": 13, "Mag_Z": 13,
-  }
+    # ADC conversion parameters (assuming potentially different resolutions)
+    adc_resolutions = {  # Dictionary for sensor-specific ADC resolutions
+        "A0": 13, "A1": 13, "A2": 13, "A3": 13, "A4": 13,
+        "A5": 13, "A6": 13, "A7": 13,
+        "Aclm_X": 16, "Aclm_Y": 16, "Aclm_Z": 16,
+        "Gyro_X": 16, "Gyro_Y": 16, "Gyro_Z": 16,
+        "Mag_X": 16, "Mag_Y": 16, "Mag_Z": 16
+    }
 
-  # Extract and convert sensor data
-  i = 0
-  for sensor_name in adc_resolutions:
+    # Extract and convert sensor data
+    i = 0
+    for sensor_name in adc_resolutions:
         adc_resolution = adc_resolutions[sensor_name]
         max_adc_value = 2**adc_resolution - 1
         slope = 3.3 / max_adc_value
         # sensor_index = int(sensor_name[1:])  # Extract the numeric part of the sensor name
         sensor_data[sensor_name] = SD_data[:, i] * slope
+        SD_sensor_data.append(sensor_data[sensor_name])
         i = i + 1
 
-  # Calculate data points
-  n = len(sensor_data["A0"])
-  m = n % 512
+    # Calculate data points
+    n = len(sensor_data["A0"])
+    m = n % 256
 
-  print('Data conversion is successful.')
-  print(f'Total data point: {n}')
-  print(f'Data point less than 512: {m}')
+    print('Data conversion is successful.')
+    print(f'Total data point: {n}')
+    print(f'Data point less than 512: {m}')
 
-  return sensor_data
+    # plot the first sensor data
+    # time_vector = np.arange(len(sensor_data["Mag_Z"])) / Fs_sensor
+    # plt.figure(figsize=(10, 5))
+    # plt.plot(time_vector, sensor_data["Mag_Z"], label='A0 Sensor')
+    # plt.title('Sensor Data A0')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Sensor Output (a.u.)')
+    # plt.legend()
+    # plt.grid(True)
+    # plt.show()
+
+    return sensor_data
 
 
 
@@ -100,8 +111,8 @@ def visualize_sensor_data(sensor_data, database_name, Fs_sensor):
     time_vector = np.arange(len(sensor_data["A0"])) / Fs_sensor
 
     # Create subplots for the first 5 sensors
-    fig, axs = plt.subplots(5, 1, figsize=(15, 8))  # Adjust figsize as needed
-    for i, sensor_name in enumerate(list(sensor_data.keys())[:5]):
+    fig, axs = plt.subplots(8, 1, figsize=(15, 15))  # Adjust figsize as needed
+    for i, sensor_name in enumerate(list(sensor_data.keys())[:8]):
         axs[i].plot(time_vector, sensor_data[sensor_name], label=sensor_name)
         axs[i].set_title(f'{sensor_name} Sensor Data')
         axs[i].set_xlabel('Time (s)')
@@ -111,12 +122,12 @@ def visualize_sensor_data(sensor_data, database_name, Fs_sensor):
 
     # Save the first plot
     plt.tight_layout()
-    plt.savefig(f'./visual/{database_name}_part1.png', dpi=300)
+    plt.savefig(f'./visual/test_{database_name}_blink.png', dpi=300)
     plt.clf()
 
     # Create subplots for the next 5 sensors
-    fig, axs = plt.subplots(5, 1, figsize=(15, 8))  # Adjust figsize as needed
-    for i, sensor_name in enumerate(list(sensor_data.keys())[5:10]):
+    fig, axs = plt.subplots(9, 1, figsize=(20, 15))  # Adjust figsize as needed
+    for i, sensor_name in enumerate(list(sensor_data.keys())[8:18]):
         axs[i].plot(time_vector, sensor_data[sensor_name], label=sensor_name)
         axs[i].set_title(f'{sensor_name} Sensor Data')
         axs[i].set_xlabel('Time (s)')
@@ -126,12 +137,12 @@ def visualize_sensor_data(sensor_data, database_name, Fs_sensor):
 
     # Save the second plot
     plt.tight_layout()
-    plt.savefig(f'./visual/{database_name}_part2.png', dpi=300)
+    plt.savefig(f'./visual/test_{database_name}_IMU.png', dpi=300)
     plt.clf()
 
     # Create subplots for the last 9 sensors
     fig, axs = plt.subplots(9, 1, figsize=(15, 12))  # Adjust figsize as needed
-    for i, sensor_name in enumerate(list(sensor_data.keys())[16:]):
+    for i, sensor_name in enumerate(list(sensor_data.keys())[10:]):
         # row = i // 3
         # col = i % 3
         axs[i].plot(time_vector, sensor_data[sensor_name], label=sensor_name)

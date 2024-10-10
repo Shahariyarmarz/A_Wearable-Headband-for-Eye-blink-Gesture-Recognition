@@ -32,12 +32,8 @@ void set_pinMode(void){
   pinMode(A5, INPUT);
   pinMode(A6, INPUT);
   pinMode(A7, INPUT);
-  pinMode(A14, INPUT);//pin 15
+  pinMode(A14, INPUT);
   pinMode(A15, INPUT); //Pin 16
-  pinMode(A16, INPUT);
-  pinMode(A17, INPUT);
-  pinMode(A18, INPUT);
-  pinMode(A19, INPUT);
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(led_red, OUTPUT);
   pinMode(PIN_VBAT, INPUT);
