@@ -1,0 +1,28 @@
+For pushing a whole Folder to the repository follow the steps of command:
+--------------------------------------------------------------------------
+git init
+git add Data_visualization
+git commit -m "Adding new Project"
+git branch -M main
+git remote add origin https://github.com/Shahariyarmarz/Design-Development-of-a-Mechanomyography-Based-Wearable-Headset-for-Eye-blink-Gesture-Recognition
+git push -u -f origin main (-f used for pushing folder with code---- remember you can not push any empty folder)
+
+
+
+
+For committing changes in code :
+---------------------------------------------------
+First go to the code directory -------> cd Data_visualization
+Then write command -------> git add -A
+After that give a title for committing changes ------> git commit -m "title for changes in code"
+At the end we have to check the branch(main/master) and remote origin (web address) added or not for pushing it to the main branch of repository --------->  git branch -M main  (if branch is already selected then we do not need select the branch)
+---------> git remote add origin https://github.com/Shahariyarmarz/Design-Development-of-a-Mechanomyography-Based-Wearable-Headset-for-Eye-blink-Gesture-Recognition (if remote origin address is already added then we do not need to add remote origin also)
+Finally, we can push it using command ------> git push
+
+
+
+
+For creating local directory using gitbash:
+----------------------------------------------------
+go to the path using cd command, path address where you want to create directory ex: cd your_desire_path_address
+use mkdir command  to create new directory ex: mkdir new_folder_name
