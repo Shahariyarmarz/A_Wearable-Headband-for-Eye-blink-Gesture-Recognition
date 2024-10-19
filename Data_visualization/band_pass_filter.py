@@ -25,19 +25,19 @@ def band_pass(database_name, sensor_data, low_cutoff, high_cutoff, fs_mmg, fs_im
     try:
         logging.info(f"Applying bandpass filter to MMG and IMU sensors for {database_name}")
 
-        # ===================== Compute RMS of A0 to A2 (accelerometer XYZ) =====================
-        a0_x = sensor_data["A0"]
-        a1_y = sensor_data["A1"]
-        a2_z = sensor_data["A2"]
+        # ===================== Compute RMS of A5 to A7 (accelerometer XYZ) =====================
+        aclm_x = sensor_data["A5"]
+        aclm_y = sensor_data["A6"]
+        aclm_z = sensor_data["A7"]
         
-        # Compute RMS for A0, A1, A2 (treated as the same accelerometer)
-        a0_rms = np.sqrt((a0_x**2 + a1_y**2 + a2_z**2) / 3)
+        # Compute RMS for A5, A6, A7 (treated as the same accelerometer)
+        A5_rms = np.sqrt((aclm_x**2 + aclm_y**2 + aclm_z**2) / 3)
 
         # Use this new RMS signal as the new A0 sensor
-        mmg_sensor_data_list = [a0_rms]  # Start the list with the RMS of A0 to A2
+        mmg_sensor_data_list = [A5_rms]  # Start the list with the RMS of A5 to A7
 
         # Add the remaining MMG sensors (A3 to A7)
-        mmg_sensor_data_list.extend([sensor_data[f"A{i}"] for i in range(3, 8)])  # A3 to A7
+        mmg_sensor_data_list.extend([sensor_data[f"A{i}"] for i in range(5)])  # A0 to A4
 
         # ===================== IMU Sensor Data =====================
         imu_sensor_data_list = [sensor_data.get(key) for key in ["Aclm_X", "Aclm_Y", "Aclm_Z", "Gyro_X", "Gyro_Y", "Gyro_Z", "Mag_X", "Mag_Y", "Mag_Z"]]

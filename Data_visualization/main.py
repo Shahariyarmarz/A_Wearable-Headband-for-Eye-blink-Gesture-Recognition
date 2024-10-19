@@ -8,7 +8,7 @@ from kalman_filter import imu_to_roll_pitch_yaw_ekf
 import pandas as pd
 from datetime import timedelta, datetime, time
 from head_movement import load_gesture_data_from_excel, process_gestures, plot_imu_data
-from eye_blink import process_eye_blinks, plot_mmg_data
+from eye_blink_v2 import process_eye_blinks, plot_mmg_data
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -53,8 +53,9 @@ def main():
             # Pass the entire MMG data (A0 to A7) to the band_pass function
             filtered_mmg_data, _ = band_pass(daq_label, sensor_data, low_cutoff, high_cutoff, fs_mmg, fs_imu)
             
-            # Filtered MMG data is expected to be a list with 8 arrays corresponding to A0 to A7
+            # Filtered MMG data is expected to be a list with 8 arrays corresponding to A0 to A5
             sensor_names = ["A0", "A1", "A2", "A3", "A4", "A5"]
+            # A0 = accelerometer RMS, A1 to A5 = piezo sensors
             
             # Store each filtered sensor's data into filtered_data_dict
             for j, sensor_name in enumerate(sensor_names):
@@ -110,7 +111,7 @@ def main():
         blink_data = load_gesture_data_from_excel(excel_file_path)  # Load blink gesture data from Excel
 
         # Process eye blink detection
-        eye_blink_results = process_eye_blinks(filtered_data_dict, blink_data, fs_mmg)
+        eye_blink_results = process_eye_blinks(filtered_data_dict, blink_data, fs_mmg, min_count=50)
 
         print("Eye Blink Detection Results:")
         print(eye_blink_results)
