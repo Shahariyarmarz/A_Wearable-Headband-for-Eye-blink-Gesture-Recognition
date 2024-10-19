@@ -2,7 +2,7 @@ import logging
 import os
 from daq_processing import process_multiple_daqs
 from visualization import visualize_sensor_data
-from config import get_daq_file_paths, get_fs_MMG_sensor, get_fs_IMU_sensor
+from config import get_daq_file_paths, get_fs_MMG_sensor, get_fs_IMU_sensor, get_excel_file_path
 from band_pass_filter import band_pass
 from kalman_filter import imu_to_roll_pitch_yaw_ekf
 import pandas as pd
@@ -76,7 +76,7 @@ def main():
 
         # Load gesture data from Excel
         # excel_file_path = "./modified_gesture_data_in_seconds.xlsx"
-        excel_file_path = "./modified_Sequential_Play_8.xlsx"
+        excel_file_path = get_excel_file_path()
         gesture_data = load_gesture_data_from_excel(excel_file_path)
         MIN_COUNT = 5  # Minimum number of values above threshold to detect a gesture
         # Process the gestures
@@ -122,8 +122,6 @@ def main():
         plot_mmg_data(filtered_data_dict, blink_data, fs_mmg, eye_blink_results, 
                             output_file_daq1='mmg_data_daq1_with_blinks.png', 
                             output_file_daq2='mmg_data_daq2_with_blinks.png')
-
-
                 
     except Exception as e:
         logging.error(f"An error occurred: {e}")

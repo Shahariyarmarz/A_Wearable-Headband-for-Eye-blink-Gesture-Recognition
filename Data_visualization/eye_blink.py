@@ -220,4 +220,3 @@ def plot_mmg_data(filtered_data_dict, blink_data, fs, results, output_file_daq1=
     plt.tight_layout()
     plt.savefig(output_file_daq2)
     plt.close()
-

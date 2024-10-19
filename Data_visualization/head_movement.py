@@ -241,5 +241,3 @@ def load_gesture_data_from_excel(file_path):
     """
     gesture_data = pd.read_excel(file_path)
     return gesture_data
-
-
