@@ -8,7 +8,7 @@ from kalman_filter import imu_to_roll_pitch_yaw_ekf
 import pandas as pd
 from datetime import timedelta, datetime, time
 from head_movement import load_gesture_data_from_excel, process_gestures, plot_imu_data
-from eye_blink import eye_blink_detection
+from eye_blink import process_eye_blinks, plot_mmg_data
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -106,13 +106,24 @@ def main():
         )
 
         # Eye Blink Detection
-        eye_blink_results = eye_blink_detection(filtered_data_dict, excel_file_path, fs_mmg)
+
+        blink_data = load_gesture_data_from_excel(excel_file_path)  # Load blink gesture data from Excel
+
+        # Process eye blink detection
+        eye_blink_results = process_eye_blinks(filtered_data_dict, blink_data, fs_mmg)
 
         print("Eye Blink Detection Results:")
         print(eye_blink_results)
 
         # Optionally, save the results to an Excel file
         eye_blink_results.to_excel('eye_blink_detection_results.xlsx', index=False)
+
+        # Plot MMG data with blink detection visualization for DAQ 1 and DAQ 2
+        plot_mmg_data(filtered_data_dict, blink_data, fs_mmg, eye_blink_results, 
+                            output_file_daq1='mmg_data_daq1_with_blinks.png', 
+                            output_file_daq2='mmg_data_daq2_with_blinks.png')
+
+
                 
     except Exception as e:
         logging.error(f"An error occurred: {e}")

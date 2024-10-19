@@ -76,24 +76,24 @@ def band_pass(database_name, sensor_data, low_cutoff, high_cutoff, fs_mmg, fs_im
 
         logging.info(f"MMG sensor data visualization saved for {database_name}")
 
-        # Visualize IMU sensors (if available)
-        if filtered_imu_data:
-            for i, filtered_data in enumerate(filtered_imu_data):
-                time_vector_imu = np.arange(len(filtered_data)) / fs_imu  # Ensure the time vector matches filtered data length
-                plt.figure(figsize=(10, 4))
-                plt.plot(time_vector_imu, filtered_data, label=f'IMU Sensor {i+1}')
-                plt.title(f'Filtered IMU Sensor {i+1} Data')
-                plt.xlabel('Time (s)')
-                plt.ylabel('Sensor Output (a.u.)')
-                plt.legend()
-                plt.grid(True)
-                plt.tight_layout()
-                plt.savefig(f'./visual/{database_name}_IMU_Sensor_{i+1}_filtered.png', dpi=300)
-                plt.clf()
+        # # Visualize IMU sensors (if available)
+        # if filtered_imu_data:
+        #     for i, filtered_data in enumerate(filtered_imu_data):
+        #         time_vector_imu = np.arange(len(filtered_data)) / fs_imu  # Ensure the time vector matches filtered data length
+        #         plt.figure(figsize=(10, 4))
+        #         plt.plot(time_vector_imu, filtered_data, label=f'IMU Sensor {i+1}')
+        #         plt.title(f'Filtered IMU Sensor {i+1} Data')
+        #         plt.xlabel('Time (s)')
+        #         plt.ylabel('Sensor Output (a.u.)')
+        #         plt.legend()
+        #         plt.grid(True)
+        #         plt.tight_layout()
+        #         plt.savefig(f'./visual/{database_name}_IMU_Sensor_{i+1}_filtered.png', dpi=300)
+        #         plt.clf()
 
-            logging.info(f"IMU sensor data visualization saved for {database_name}")
-        else:
-            logging.info(f"No IMU data available for visualization in {database_name}")
+        #     logging.info(f"IMU sensor data visualization saved for {database_name}")
+        # else:
+        #     logging.info(f"No IMU data available for visualization in {database_name}")
 
         return filtered_mmg_data, filtered_imu_data
 
