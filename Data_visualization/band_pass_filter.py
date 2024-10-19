@@ -10,7 +10,8 @@ def band_pass(database_name, sensor_data, low_cutoff, high_cutoff, fs_mmg, fs_im
     
     Args:
         database_name (str): Name of the database for saving visualizations.
-        sensor_data (dict): Dictionary containing all sensor data, where first 8 entries are MMG and the last 9 are IMU.
+        sensor_data (dict): Dictionary containing all sensor data, where the first 3 entries are the XYZ axes of 
+                            the same accelerometer, and the next 5 are individual MMG sensors.
         low_cutoff (float): Low cutoff frequency for the bandpass filter.
         high_cutoff (float): High cutoff frequency for the bandpass filter.
         fs_mmg (int): Sampling frequency for MMG sensor data.
@@ -24,8 +25,21 @@ def band_pass(database_name, sensor_data, low_cutoff, high_cutoff, fs_mmg, fs_im
     try:
         logging.info(f"Applying bandpass filter to MMG and IMU sensors for {database_name}")
 
-        # ===================== Split MMG and IMU Data =====================
-        mmg_sensor_data_list = [sensor_data[f"A{i}"] for i in range(8)]  # First 8 entries for MMG (A0 to A7)
+        # ===================== Compute RMS of A0 to A2 (accelerometer XYZ) =====================
+        a0_x = sensor_data["A0"]
+        a1_y = sensor_data["A1"]
+        a2_z = sensor_data["A2"]
+        
+        # Compute RMS for A0, A1, A2 (treated as the same accelerometer)
+        a0_rms = np.sqrt((a0_x**2 + a1_y**2 + a2_z**2) / 3)
+
+        # Use this new RMS signal as the new A0 sensor
+        mmg_sensor_data_list = [a0_rms]  # Start the list with the RMS of A0 to A2
+
+        # Add the remaining MMG sensors (A3 to A7)
+        mmg_sensor_data_list.extend([sensor_data[f"A{i}"] for i in range(3, 8)])  # A3 to A7
+
+        # ===================== IMU Sensor Data =====================
         imu_sensor_data_list = [sensor_data.get(key) for key in ["Aclm_X", "Aclm_Y", "Aclm_Z", "Gyro_X", "Gyro_Y", "Gyro_Z", "Mag_X", "Mag_Y", "Mag_Z"]]
         imu_sensor_data_list = [data for data in imu_sensor_data_list if data is not None and len(data) > 0]  # Filter out any missing or empty IMU data
 

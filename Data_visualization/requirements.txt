@@ -1,4 +1,7 @@
 numpy
-matplotlib
 scipy
-skimage
+matplotlib
+scikit-image
+filterpy
+pandas
+openpyxl

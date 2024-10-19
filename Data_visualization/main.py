@@ -7,6 +7,8 @@ from band_pass_filter import band_pass
 from kalman_filter import imu_to_roll_pitch_yaw_ekf
 import pandas as pd
 from datetime import timedelta, datetime, time
+from head_movement import load_gesture_data_from_excel, process_gestures, plot_imu_data
+from eye_blink import eye_blink_detection
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -52,7 +54,7 @@ def main():
             filtered_mmg_data, _ = band_pass(daq_label, sensor_data, low_cutoff, high_cutoff, fs_mmg, fs_imu)
             
             # Filtered MMG data is expected to be a list with 8 arrays corresponding to A0 to A7
-            sensor_names = ["A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7"]
+            sensor_names = ["A0", "A1", "A2", "A3", "A4", "A5"]
             
             # Store each filtered sensor's data into filtered_data_dict
             for j, sensor_name in enumerate(sensor_names):
@@ -65,47 +67,52 @@ def main():
         filtered_data_dict["DAQ_1_p"] = IMU_RPY_data[:, 1]
         filtered_data_dict["DAQ_1_y"] = IMU_RPY_data[:, 2]
 
-        # file_path = './Data_files/Sequential_Play_9.xlsx'
-        # df = pd.read_excel(file_path)
+        # Define thresholds for detecting gestures based on IMU data
+        PITCH_THRESHOLD = 0.4  # Front head movement
+        YAW_THRESHOLD_RIGHT = 0.15  # Right head movement
+        YAW_THRESHOLD_LEFT = -0.15  # Left head movement
 
-        # # Inspect the raw data types of 'Pressed' and 'Released' columns
-        # print("Data types before processing:")
-        # print(df.dtypes)
-        # print("Raw 'Pressed' and 'Released' values:")
-        # print(df[['Pressed', 'Released']].head())
+        # Example usage:
 
-        # # Function to convert datetime.time and string formats to timedelta
-        # def time_to_timedelta(time_val):
-        #     if isinstance(time_val, str):
-        #         # Try parsing time as a string (e.g., "00:00:06")
-        #         return pd.to_timedelta(time_val, errors='coerce')
-        #     elif isinstance(time_val, time):
-        #         # Convert datetime.time to timedelta since midnight
-        #         return timedelta(hours=time_val.hour, minutes=time_val.minute, seconds=time_val.second)
-        #     else:
-        #         return pd.NaT  # Return NaT if it doesn't match either
+        # Load gesture data from Excel
+        # excel_file_path = "./modified_gesture_data_in_seconds.xlsx"
+        excel_file_path = "./modified_Sequential_Play_8.xlsx"
+        gesture_data = load_gesture_data_from_excel(excel_file_path)
+        MIN_COUNT = 5  # Minimum number of values above threshold to detect a gesture
+        # Process the gestures
+        results = process_gestures(
+            filtered_data_dict, 
+            gesture_data, 
+            PITCH_THRESHOLD, 
+            YAW_THRESHOLD_RIGHT, 
+            YAW_THRESHOLD_LEFT,
+            fs_imu,
+            MIN_COUNT  # Minimum number of samples above threshold for detection
+        )
 
-        # # Apply the conversion function to the "Pressed" and "Released" columns
-        # df['Pressed'] = df['Pressed'].apply(time_to_timedelta)
-        # df['Released'] = df['Released'].apply(time_to_timedelta)
+        # Print the results
+        print(results)
 
-        # # Check for any NaT values (to detect conversion issues)
-        # print("Rows with NaT (non-converted values):")
-        # print(df[df.isna().any(axis=1)])  # Display rows that have NaT values
+        # Call the plotting function
+        plot_imu_data(
+            filtered_data_dict, 
+            gesture_data, 
+            PITCH_THRESHOLD, 
+            YAW_THRESHOLD_RIGHT, 
+            YAW_THRESHOLD_LEFT, 
+            results, 
+            fs_imu,  # Example sampling rate
+            output_file='imu_data_with_gestures.png'  # Custom output file name
+        )
 
-        # # Add 14 seconds to both "Pressed" and "Released" times (only if they are valid)
-        # df['Pressed'] = df['Pressed'].apply(lambda x: x + timedelta(seconds=14) if pd.notna(x) else x)
-        # df['Released'] = df['Released'].apply(lambda x: x + timedelta(seconds=14) if pd.notna(x) else x)
+        # Eye Blink Detection
+        eye_blink_results = eye_blink_detection(filtered_data_dict, excel_file_path, fs_mmg)
 
-        # # Convert Pressed and Released columns to total seconds
-        # df['Pressed'] = df['Pressed'].apply(lambda x: x.total_seconds() if pd.notna(x) else x)
-        # df['Released'] = df['Released'].apply(lambda x: x.total_seconds() if pd.notna(x) else x)
+        print("Eye Blink Detection Results:")
+        print(eye_blink_results)
 
-        # # Display the updated dataframe to check the results
-        # print(df)
-
-        # Optionally, save the updated dataframe to a new Excel file
-        # df.to_excel('updated_gesture_data_in_seconds.xlsx', index=False)
+        # Optionally, save the results to an Excel file
+        eye_blink_results.to_excel('eye_blink_detection_results.xlsx', index=False)
                 
     except Exception as e:
         logging.error(f"An error occurred: {e}")
