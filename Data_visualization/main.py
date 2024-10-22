@@ -8,7 +8,7 @@ from kalman_filter import imu_to_roll_pitch_yaw_ekf
 import pandas as pd
 from datetime import timedelta, datetime, time
 from head_movement import load_gesture_data_from_excel, process_gestures, plot_imu_data
-from eye_blink_v2 import process_eye_blinks, plot_mmg_data
+from eye_blink_v2 import process_eye_blinks, plot_mmg_data, calculate_threshold
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -110,8 +110,10 @@ def main():
 
         blink_data = load_gesture_data_from_excel(excel_file_path)  # Load blink gesture data from Excel
 
+        # Calc eye blink threshold
+        threshold_daq1, threshold_daq2 = calculate_threshold(filtered_data_dict, blink_data, fs_mmg, quantile = 0.6)
         # Process eye blink detection
-        eye_blink_results = process_eye_blinks(filtered_data_dict, blink_data, fs_mmg, min_count=50)
+        eye_blink_results = process_eye_blinks(filtered_data_dict, blink_data, fs_mmg, min_count=8)
 
         print("Eye Blink Detection Results:")
         print(eye_blink_results)

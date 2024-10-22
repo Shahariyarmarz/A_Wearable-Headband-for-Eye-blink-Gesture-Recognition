@@ -29,10 +29,11 @@ def detect_eye_blink(gesture_window_data, thresholds, min_points_above_threshold
         count_above_threshold = np.sum(sensor_data > thresholds[i])
         # Check if enough data points exceed the threshold (min_points_above_threshold)
         blink_detected = count_above_threshold >= min_points_above_threshold
-        blink_signals.append(blink_detected)
+        # blink_signals.append(blink_detected)
     
     # Check if at least 3 sensors detect a blink
-    if np.sum(blink_signals) >= 2:
+    # if np.sum(blink_signals) >= 2:
+    if blink_detected:
         return True  # Blink detected
     else:
         return False  # No blink detected
@@ -63,7 +64,7 @@ def extract_blink_data(filtered_data_dict, start_time, end_time, fs, daq_label):
     return gesture_window_data
 
 
-def process_eye_blinks(filtered_data_dict, blink_data, fs, min_count=4):
+def process_eye_blinks(filtered_data_dict, thresholds_daq1, thresholds_daq2, blink_data, fs, min_count=4):
     """
     Processes a list of eye blink gestures and applies the blink detection for each blink window.
     
@@ -85,12 +86,17 @@ def process_eye_blinks(filtered_data_dict, blink_data, fs, min_count=4):
         ground_truth = row['Eye_blink']  # 0: both eyes, 1: left eye, 2: right eye
         
         # Extract MMG data for DAQ 1 and DAQ 2
+        if i == 0 or i ==1:
+            continue
         gesture_window_data_daq1 = extract_blink_data(filtered_data_dict, start_time, end_time, fs, "DAQ_1")
         gesture_window_data_daq2 = extract_blink_data(filtered_data_dict, start_time, end_time, fs, "DAQ_2")
-        
-        # Define thresholds for each sensor in DAQ 1 and DAQ 2
-        thresholds_daq1 = [0.08, 0.125, 0.1, 0.06, 0.1, 0.4]  # Manual thresholds for DAQ 1
-        thresholds_daq2 = [0.03, 0.02, 0.09, 0.05, 0.02, 0.5]  # Manual thresholds for DAQ 2
+        # # Define thresholds for each sensor in DAQ 1 and DAQ 2
+        # thresholds_daq1 = [0.08, 0.125, 0.1, 0.06, 0.1, 0.4]  # Manual thresholds for DAQ 1
+        # thresholds_daq2 = [0.03, 0.02, 0.09, 0.05, 0.02, 0.5]  # Manual thresholds for DAQ 2
+
+        # # calculate thresholds for each sensor in DAQ 1 and DAQ 2
+        # thresholds_daq1 = [calculate_threshold(gesture_window_data_daq1[f"A{i}"]) for i in range(6)]
+        # thresholds_daq2 = [calculate_threshold(gesture_window_data_daq2[f"A{i}"]) for i in range(6)]
         
         # Detect blinks for DAQ 1 and DAQ 2
         daq1_blink_detected = detect_eye_blink(gesture_window_data_daq1, thresholds_daq1, min_points_above_threshold=min_count)
@@ -125,7 +131,7 @@ def process_eye_blinks(filtered_data_dict, blink_data, fs, min_count=4):
     return pd.DataFrame(results)
 
 
-def calculate_threshold(sensor_data, std_multiplier=0.5):
+def calculate_threshold(filtered_data_dict, blink_data, fs, quantile = 0.6):
     """
     Calculates the threshold for eye blink detection using a modified approach.
     Uses mean + (a fraction of the standard deviation) as the threshold.
@@ -137,17 +143,41 @@ def calculate_threshold(sensor_data, std_multiplier=0.5):
     Returns:
         float: Calculated threshold for the sensor, or 0 if the data is empty.
     """
-    if len(sensor_data) == 0 or np.all(np.isnan(sensor_data)):
-        return 0  # Return 0 threshold if data is empty or invalid
+    thresholds_daq1 = []
+    thresholds_daq2 = []
 
-    mean_value = np.mean(sensor_data)
-    std_value = np.std(sensor_data)
-
-    if np.isnan(mean_value) or np.isnan(std_value) or std_value == 0:
-        return mean_value  # Return just the mean if std deviation is invalid
+    for i, row in blink_data.iterrows():
+        start_time = row['Pressed']
+        end_time = row['Released']
+        
+        # Extract MMG data for DAQ 1 and DAQ 2
+        if i == 0:
+            gesture_window_data_daq1 = extract_blink_data(filtered_data_dict, start_time, end_time, fs, "DAQ_1")
+            for i in range(6):
+                sensor_data = gesture_window_data_daq1[f"A{i}"]
+                if len(sensor_data) == 0 or np.all(np.isnan(sensor_data)):
+                    thresholds_daq1.append(0)
+                    continue
+                thresh = np.quantile(sensor_data, quantile)
+                thresholds_daq1.append(thresh)
+        if i == 1:
+            gesture_window_data_daq2 = extract_blink_data(filtered_data_dict, start_time, end_time, fs, "DAQ_2")
+            for i in range(6):
+                sensor_data = gesture_window_data_daq2[f"A{i}"]
+                if len(sensor_data) == 0 or np.all(np.isnan(sensor_data)):
+                    thresholds_daq2.append(0)
+                    continue
+                thresh = np.quantile(sensor_data, quantile)
+                thresholds_daq2.append(thresh)
+        if i>=2:
+            break
+        
+    # # Define thresholds for each sensor in DAQ 1 and DAQ 2
+    # thresholds_daq1 = [0.08, 0.125, 0.1, 0.06, 0.1, 0.4]  # Manual thresholds for DAQ 1
+    # thresholds_daq2 = [0.03, 0.02, 0.09, 0.05, 0.02, 0.5]  # Manual thresholds for DAQ 2
 
     # Return threshold as mean + (fraction of standard deviation)
-    return mean_value + std_multiplier * std_value
+    return thresholds_daq1, thresholds_daq2
 
 
 def plot_mmg_data(filtered_data_dict, blink_data, fs, results, output_file_daq1='mmg_data_daq1_with_blinks.png', output_file_daq2='mmg_data_daq2_with_blinks.png'):
