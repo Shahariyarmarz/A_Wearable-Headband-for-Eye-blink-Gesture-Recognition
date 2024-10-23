@@ -111,9 +111,9 @@ def main():
         blink_data = load_gesture_data_from_excel(excel_file_path)  # Load blink gesture data from Excel
 
         # Calc eye blink threshold
-        threshold_daq1, threshold_daq2 = calculate_threshold(filtered_data_dict, blink_data, fs_mmg, quantile = 0.6)
+        threshold_daq1, threshold_daq2 = calculate_threshold(filtered_data_dict, blink_data, fs_mmg, quantile = 0.9)
         # Process eye blink detection
-        eye_blink_results = process_eye_blinks(filtered_data_dict, blink_data, fs_mmg, min_count=8)
+        eye_blink_results = process_eye_blinks(filtered_data_dict, threshold_daq1, threshold_daq2, blink_data, fs_mmg, min_count=32)
 
         print("Eye Blink Detection Results:")
         print(eye_blink_results)
