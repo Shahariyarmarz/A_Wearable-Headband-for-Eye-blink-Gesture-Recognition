@@ -1,0 +1,13 @@
+Gesture,Pressed,Released
+Left_EyeBlink_threshold_time_window,0:00:10,0:00:13,
+Right_EyeBlink_threshold_time_window,0:00:14,0:00:17,
+Both_Eyeblink,0:00:23,0:00:26,
+Left_EyeBlink,0:00:27,0:00:30,
+Left_Head_Movement,0:00:30,0:00:32,
+Right_EyeBlink,0:00:34,0:00:36,
+Right_Head_Movement,0:00:37,0:00:39,
+Both_Eyeblink,0:00:40,0:00:43,
+Left_EyeBlink,0:00:45,0:00:47,
+Left_Head_Movement,0:00:48,0:00:50,
+Right_EyeBlink,0:00:56,0:00:59,
+Right_Head_Movement,0:01:00,0:01:02,

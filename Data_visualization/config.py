@@ -5,8 +5,8 @@ def get_daq_file_paths():
     Fetch DAQ file paths from environment variables or configuration files.
     """
     return [
-        os.getenv("DAQ_FILE_1", "./Data_files/DAQ1_IMU_Data00.dat"),
-        os.getenv("DAQ_FILE_2", "./Data_files/DAQ2_Data00.dat")
+        os.getenv("DAQ_FILE_1", "./Data_files/DAQ1_IMU_Data14.dat"),
+        os.getenv("DAQ_FILE_2", "./Data_files/DAQ2_Data14.dat")
     ]
 
 def get_fs_MMG_sensor():
@@ -24,4 +24,4 @@ def get_excel_file_path():
     """
     Fetch the path of the Excel file containing gesture data.
     """
-    return os.getenv("EXCEL_FILE_PATH", "Data_files/modified_Sequential_Play_0.xlsx")
+    return os.getenv("EXCEL_FILE_PATH", "Data_files/modified_Sequential_Play_14.xlsx")
