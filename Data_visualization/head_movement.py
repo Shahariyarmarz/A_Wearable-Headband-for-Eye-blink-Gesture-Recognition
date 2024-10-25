@@ -22,40 +22,63 @@ def detect_head_movement(gesture_window_data):
     pitch_data = gesture_window_data["pitch"]
     yaw_data = gesture_window_data["yaw"]
 
+    # Initialize crossing variables
+    pitch_cross_low = []
+    pitch_cross_high = []
+    yaw_cross_low = []
+    yaw_cross_high = []
+
     # 1. Detect Front Head Movement
     if np.all(roll_data < 0.1) and np.all(pitch_data < 0.2) and np.all(yaw_data < 0.1):
         return 0  # Front
 
     # 2. Detect Left Head Movement
-    if np.any(roll_data >= 0.03):  # Roll condition
+    elif np.any(roll_data >= 0.025):  # Roll condition
         # Check the pitch condition
-        pitch_cross_low = np.where(pitch_data <= -0.4)[0]  # Indices where pitch is <= -0.4
+        pitch_cross_low = np.where(pitch_data <= -0.2)[0]  # Indices where pitch is <= -0.2
+        yaw_cross_high = np.where(yaw_data >= 0.08)[0]      # Indices where yaw is >= 0.08
+
         if len(pitch_cross_low) > 0:
-            pitch_cross_high = np.where(pitch_data[pitch_cross_low[0]:] >= 0.4)[0]  # After low, check for high
+            # Check if pitch goes back up after going low
+            pitch_cross_high = np.where(pitch_data[pitch_cross_low[0]:] >= 0.2)[0]
             if len(pitch_cross_high) > 0:
-                # Check the yaw condition
-                yaw_cross_high = np.where(yaw_data >= 0.1)[0]  # Indices where yaw is >= 0.1
-                if len(yaw_cross_high) > 0:
-                    yaw_cross_low = np.where(yaw_data[yaw_cross_high[0]:] <= -0.1)[0]  # After high, check for low
-                    if len(yaw_cross_low) > 0:
-                        return 1  # Left
+                return 1  # Left, Roll + Pitch conditions met
+
+        if len(yaw_cross_high) > 0:
+            # Check if yaw goes back down after going high
+            yaw_cross_low = np.where(yaw_data[yaw_cross_high[0]:] <= -0.08)[0]
+            if len(yaw_cross_low) > 0:
+                return 1  # Left, Roll + Yaw conditions met
+
+    # Check if two out of (pitch and yaw) are met, without requiring roll
+    if len(pitch_cross_low) > 0 and len(yaw_cross_high) > 0:
+        return 1  # Left, Pitch + Yaw conditions met
 
     # 3. Detect Right Head Movement
-    if np.any(roll_data <= -0.03):  # Roll condition
+    elif np.any(roll_data <= -0.025):  # Roll condition
         # Check the pitch condition
-        pitch_cross_high = np.where(pitch_data >= 0.4)[0]  # Indices where pitch is >= 0.4
+        pitch_cross_high = np.where(pitch_data >= 0.2)[0]  # Indices where pitch is >= 0.2
+        yaw_cross_low = np.where(yaw_data <= -0.08)[0]     # Indices where yaw is <= -0.08
+
         if len(pitch_cross_high) > 0:
-            pitch_cross_low = np.where(pitch_data[pitch_cross_high[0]:] <= -0.4)[0]  # After high, check for low
+            # Check if pitch goes back down after going high
+            pitch_cross_low = np.where(pitch_data[pitch_cross_high[0]:] <= -0.2)[0]
             if len(pitch_cross_low) > 0:
-                # Check the yaw condition
-                yaw_cross_low = np.where(yaw_data <= -0.1)[0]  # Indices where yaw is <= -0.1
-                if len(yaw_cross_low) > 0:
-                    yaw_cross_high = np.where(yaw_data[yaw_cross_low[0]:] >= 0.1)[0]  # After low, check for high
-                    if len(yaw_cross_high) > 0:
-                        return 2  # Right
+                return 2  # Right, Roll + Pitch conditions met
+
+        if len(yaw_cross_low) > 0:
+            # Check if yaw goes back up after going low
+            yaw_cross_high = np.where(yaw_data[yaw_cross_low[0]:] >= 0.08)[0]
+            if len(yaw_cross_high) > 0:
+                return 2  # Right, Roll + Yaw conditions met
+
+    # Check if two out of (pitch and yaw) are met, without requiring roll
+    if len(pitch_cross_high) > 0 and len(yaw_cross_low) > 0:
+        return 2  # Right, Pitch + Yaw conditions met
 
     # No movement detected
     return None
+
 
 
 def extract_gesture_data(filtered_data_dict, start_time, end_time, fs):
