@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 def detect_head_movement(gesture_window_data):
     """
     Detects front, left, and right head movements within a given time window based on IMU data.
@@ -33,7 +32,7 @@ def detect_head_movement(gesture_window_data):
         return 0  # Front
 
     # 2. Detect Left Head Movement
-    elif np.any(roll_data >= 0.025):  # Roll condition
+    elif np.any(roll_data >= 0):  # Roll condition
         # Check the pitch condition
         pitch_cross_low = np.where(pitch_data <= -0.2)[0]  # Indices where pitch is <= -0.2
         yaw_cross_high = np.where(yaw_data >= 0.08)[0]      # Indices where yaw is >= 0.08
@@ -55,7 +54,7 @@ def detect_head_movement(gesture_window_data):
         return 1  # Left, Pitch + Yaw conditions met
 
     # 3. Detect Right Head Movement
-    elif np.any(roll_data <= -0.025):  # Roll condition
+    elif np.any(roll_data <= -0.1):  # Roll condition
         # Check the pitch condition
         pitch_cross_high = np.where(pitch_data >= 0.2)[0]  # Indices where pitch is >= 0.2
         yaw_cross_low = np.where(yaw_data <= -0.08)[0]     # Indices where yaw is <= -0.08
